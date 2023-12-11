@@ -77,6 +77,7 @@ pub fn auto_map(args: TokenStream, input: TokenStream) -> TokenStream {
 }
 ```
 #### 2、提取并解析 "target" 参数
+这里是可以解析多个参数的，因为这个mapstruct工具只有一个参数，所以直接用`target`字符串匹配了，喜欢扩展的同学，可以在这个基础上加参数，增加功能。
 ```rust
     let args = parse_macro_input!(args as AttributeArgs);
     // 提取并解析 "target" 参数
@@ -117,12 +118,14 @@ pub fn auto_map(args: TokenStream, input: TokenStream) -> TokenStream {
 ```
 
 #### 5、解析目标类型(PersonDto)
+`syn::parse_str`可以把字符串解析为rust的类型。
 ```rust
  // 解析目标类型
       let target_type_tokens = syn::parse_str::<syn::Type>(&target_type).unwrap();
 ```
 
 #### 6、生成原始结构体和From方法实现
+这里quote里的代码就是一个简单的模板引擎，用过模板引擎写页面的应该都比较熟悉。第一个struct是Person，下面的是From方法，就是把宏里解析出来的参数在模板引擎里拼接一下，就能生成代码了。
 ```rust
 // 重新生成原始结构体和转换实现
       let expanded = quote! {
@@ -142,6 +145,29 @@ pub fn auto_map(args: TokenStream, input: TokenStream) -> TokenStream {
   
       expanded.into()
 ```
+#### 踩坑记录
+生成代码这里有个坑，我之前的思路是只生成`From`方法，而不生成原结构体Person，这就导致在测试时，编译找不到Person结构，在网上找了很多资料，现在的猜测就是宏在结构体上时，需要自己把原结构代码生成一遍，否则相当于丢失代码。报错信息如下：
+```bash
+error[E0412]: cannot find type `Person` in this scope
+ --> src/main.rs:4:12
+  |
+4 | pub struct Person {
+  |            ^^^^^^ not found in this scope
+```
+解决方法有两个，第一个是先定义一次Person，这种太奇怪了，而且也失去了这个宏的意义，都定义两次结构体了，还搞什么自动转换啊。
+```rust
+    pub struct Person {
+        name: String,
+        age: u32,
+    }
+  #[auto_map(target = "PersonDto")]
+    pub struct Person {
+        name: String,
+        age: u32,
+    }
+```
+第二个就是生成原始的结构体，把Person也生成一遍，这样就不会找不到结构体了。
+
 
 ### 第三步，用项目测试宏
 先把宏的项目编译一下，在命令行执行`cargo build`。
@@ -191,3 +217,8 @@ test-mapstruct on  master
      Running `target/debug/test-mapstruct`
 dto: name:Alice, age:30
 ```
+
+## 相关资料
+1. syn包：https://docs.rs/syn/latest/syn/
+2. quote包：https://docs.rs/quote/latest/quote/
+3. rust-expand：https://github.com/dtolnay/cargo-expand
