@@ -1,8 +1,13 @@
 # rust宏实现`mapstruct`
-在java生态有个bean转换工具，叫做`mapstruct`，可以非常方便的进行bean之间的转换。原理就是可以在代码编译的时候生成转换的方法。而rust本身的宏也支持在编译的时候生成代码，因此打算用宏简单实现一个`mapstruct`。
+在java生态有个bean转换工具，叫做`mapstruct`，可以非常方便的进行bean之间的转换。原理就是可以在代码编译的时候生成转换的方法。而rust本身的宏也支持在编译的时候生成代码，因此打算用**属性宏**简单实现一个`mapstruct`。
 
 ## rust宏相关知识
+在 Rust 中宏分为两大类：声明式宏( declarative macros ) macro_rules! 和三种过程宏( procedural macros ):
 
+1. 派生宏(Derive Macros)，在之前多次见到的，可以为目标结构体或枚举派生指定的代码，例如 Debug 特征；
+2. 类属性宏(Attribute-like macro)，用于为目标添加自定义的属性；
+3. 类函数宏(Function-like macro)，看上去就像是函数调用；
+**详细的宏相关知识看结尾的文章链接。**
 
 ## 实现原理分析
 rust如果要bean之间互相转换，也很简单，可以实现`From`方法，在`From`方法里实现bean的转换赋值即可。
@@ -222,3 +227,6 @@ dto: name:Alice, age:30
 1. syn包：https://docs.rs/syn/latest/syn/
 2. quote包：https://docs.rs/quote/latest/quote/
 3. rust-expand：https://github.com/dtolnay/cargo-expand
+4. rust官方文档：https://doc.rust-lang.org/reference/introduction.html
+5. 宏小册中文版：https://zjp-cn.github.io/tlborm/
+6. 宏小册英文版：https://veykril.github.io/tlborm/
